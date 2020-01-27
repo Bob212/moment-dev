@@ -727,5 +727,125 @@
   	array[YEAR] = hooks.parseTwoDigitYear(input);
   })
 
+  // HELPERS
+
+  function daysInYears(year) {
+    return isLeapYear(year) ? 366 : 365;
+  }
+
+  function isLeapYear(year) {
+    return (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
+  }
+
+  // HOOKS
+
+  hooks.parseTwoDigitYear = function (input) {
+    return toInt(input) + (toInt(input) > 68 ? 1900 : 2000);
+  };
+
+  // MOMENTS
+
+  var getSetYear = makeGetSet('FullYear', true);
+
+  function getIsLeapYear() {
+    return isLeapYear(this.year());
+  }
+
+  function makeGetSet(unit, keepTime) {
+    return function(value) {
+      if (value != null) {
+        set$1(this, unit, value);
+        hooks.updateOffset(this, keepTime);
+        return this;
+      } else {
+        return get(this, unit);
+      }
+    };
+  }
+
+  function get(mom, unit) {
+    return mom.isValid() ?
+        mom._d['get' + (mom._isUTC ? 'UTC' : '') + unit]() : NaN;
+  }
+
+  function set$1(mom, unit, value) {
+    if (mom.isValid() && !isNaN(value)) {
+      if (unit === 'FullYear' && isLeapYear(mom.year()) && mom.month() === 1 && mom.date() === 29) {
+        mom._d['set' + (mom._isUTC ? 'UTC' : '') + unit](value, mom.month(), daysInMonth(value, mom.month()));
+      } else {
+        mom._d['set' + (mom._isUTC ? 'UTC' : '') + unit](value);
+      }
+    }
+  }
+
+  // MOMENTS
+
+  function stringGet(units) {
+    units = normilizeUnits(units);
+    if (isFunction(this[units])) {
+      return this[units]();
+    }
+    return this;
+  }
+
+  function stringSet(units, value) {
+    if (typeof units === 'object') {
+      units = normalizeObjectUnits(units);
+      var prioritized = getPrioritizedUnits(units);
+      for (var i = 0; i < prioritized.length; i++) {
+        this[prioritized[i].unit](units[prioritized[i].unit]);
+      }
+    } else {
+      units = normilizeUnits(units);
+      if (isFunction(this[units])) {
+        return this[units](value);
+      }
+    }
+    return this;
+  }
+
+  function mod(n, x) {
+    return ((n % x) + x) % x;
+  }
+
+  var indexOf;
+
+  if (Array.prototype.indexOf) {
+    indexOf = Array.prototype.indexOf;
+  } else {
+    indexOf = function (o) {
+      var i;
+      for (i = 0; i < this.length; i++) {
+        if (this[i] === o) {
+          return i;
+        }
+      }
+      return -1;
+    }
+  }
+
+  function daysInMonth(year, month) {
+    if (isNaN(year) || isNaN(month)) {
+      return NaN;
+    }
+    var modMonth = mod(month, 12);
+    year += (month - modMonth) / 12;
+    return modMonth === 1 ? (isLeapYear(year) ? 29 : 28) : (31 - modMonth % 7 % 2);
+  }
+
+  // FORMATTING
+
+  addFormatToken('M', ['MM', 2], 'Mo', function() {
+    return this.month() + 1;
+  });
+
+  addFormatToken('MMM', 0, 0, function(format) {
+    return this.localeData().monthsShort(this, format);
+  });
+
+  addFormatToken('MMMM', 0, 0, function(format) {
+    return this.localeData().months(this, format);
+  })
+
 
 }))
