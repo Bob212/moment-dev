@@ -632,7 +632,7 @@
 
   var regexes = {};
 
-  function addRefexToken (token, regex, strictRegex) {
+  function addRegexToken (token, regex, strictRegex) {
   	regexes[token] = isFunction(regex) ? regex : function (isStrict, localeData) {
   		return (isStrict && strictRegex) ? strictRegex : regex;
   	};
@@ -846,6 +846,99 @@
   addFormatToken('MMMM', 0, 0, function(format) {
     return this.localeData().months(this, format);
   })
+
+  // ALIASES
+
+  addUnitAlias('month', 'M');
+  addUnitPriority('month', 8);
+
+  // PARSING
+
+  addRegexToken('M', match1to2);
+  addRegexToken('MM', match1to2, match2);
+  addRegexToken('MMM', function(isStrict, locale) {
+    return locale.monthsShortRegex(isStrict);
+  });
+  addRegexToken('MMMM', function(isStrict, locale) {
+    return locale.monthsRegex(isStrict);
+  });
+
+  addParseToken(['M', 'MM'], function(input, array) {
+    array[MONTH] = toInt(input) - 1;
+  })
+
+  addParseToken(['MMM', 'MMMM'], function(input, array, config, token) {
+    var month = config._locale,monthsParse(input, token, config._strict);
+    if (month != null) {
+      array[MONTH] = month;
+    } else {
+      getParsingFlags(config).invalidMonth = input;
+    }
+  });
+
+  // LOCALES
+
+  var MONTHS_IN_FORMAT = /D[oD]?(\[[^\[\]]*\]|\s)+MMMM?/;
+  var defaultLocaleMonths = 'January_February_March_April_May_June_July_August_September_October_November_December'.split('_');
+  function localeMonths(m, format) {
+    if (!m) {
+      return isArray(this._months) ? this._months :
+          this._months['standalone'];
+    }
+    return isArray(this._months) ? this._months[m.month()] :
+        this._months[(this._months.isFormat] || MONTHS_IN_FORMAT).test(format) ? 'format' : 'standalone'][m.month()];
+  }
+
+  var defaultMonthssShort = 'Jan_Feb_Mar_Apr_May_Jun_Jul_Aug_Sep_Oct_Nov_Dec'.split('_');
+  function localeMonthsShort(m, format) {
+    if (!m) {
+      return isArray(this._monthsShort) ? this._monthsShort :
+          this._monthsShort['standalone']; 
+    }
+    return isArray(this._monthsShort) ? this._monthsShort[m.month()] :
+        this._monthsShort[MONTHS_IN_FORMAT.test(format) ? 'format' : 'standalone'][m.month()];
+  }
+
+  function handleStrictParse(monthName, format, strict) {
+    var i, ii, mom, llc = monthName.toLocaleLowerCase();
+    if (!this._monthsParse) {
+      // this is not used
+      this._monthsParse = [];
+      this._longMonthsParse = [];
+      this._shortMonthsParse = [];
+      for (i = 0; i < 12; ++i) {
+        mom = createUTC([2000, i]);
+        this._shortMonthsParse[i] = this.monthsShort(mom, '').toLocaleLowerCase();
+        this._longMonthsParse[i] = this.months(mom, '').toLocaleLowerCase();
+      }
+    }
+
+    if (strict) {
+      if (format === 'MMM') {
+        ii = indexOf.call(this._shortMonthsParse, llc);
+        return ii !== -1 ? ii : null;
+      } else {
+        ii = indexOf.call(this._longMonthsParse, llc);
+        return ii !== -1 ? ii : null;
+      }
+    } else {
+      if (format === 'MMM') {
+        ii = indexOf.call(this._shortMonthParse, llc);
+        if (ii !== -1) {
+          return ii;
+        }
+        ii = indexOf.call(this._longMonthsParsem llc);
+        return ii !== -1 ? ii : null;
+      } else {
+        ii = indexOf.call(this._longMonthsParse, llc);
+        if (ii !== -1) {
+          return ii;
+        }
+        ii = indexOf.call(this._shortMonthsParse, llc);
+        return ii !== -1 ? ii : null;
+      }
+    }
+  }
 
 
 }))
