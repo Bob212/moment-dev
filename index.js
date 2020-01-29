@@ -940,5 +940,95 @@
     }
   }
 
+  function localeMonthsParse(monthName, format, strict) {
+    var i, mom, regex;
+
+    if (this._monthsParseExact) {
+      return handleStrictParse.call(this, monthName, format, strict);
+    }
+
+    if (!this._monthsParse) {
+      this._monthsParse = [];
+      this._longMonthsParse = [];
+      this._shortMonthsParse = [];
+    }
+
+    for(i = 0; i < 12; i++) {
+      mom = createUTC([2000, i]);
+      if (strict && !this._longMonthsParse[i]) {
+        this._longMonthsParse[i] = new RegExp('^' + this.months(mom, '').replace('.', '') + '$', 'i');
+        this._shortMonthsParse[i] = new RegExp('^' + this.monthsShort(mom, '').replace('.', '') + '$', 'i');
+      }
+      if (!strict && !this._monthsParse[i]) {
+        regex = '^' + this.months(mom, '') + '|^' + this.monthsShort(mom, '');
+        this._monthsParse[i] = new RegExp(regex.replace('.', ''), 'i');
+      }
+      if (strict && format === 'MMM' && this._longMonthsParse[i].test(monthName)) {
+        return i;
+      } else if (strict && format === 'MMM' && this._shortMonthsParse[i].test(monthName)) {
+        return i;
+      } else if (!strict && this._monthsParse[i].test(monthName)) {
+        return i;
+      }
+    }
+  }
+
+  function setMonth (mom, value) {
+    var dayOfMonth;
+
+    if (!mom.isValid()) {
+      return mom;
+    }
+
+    if (typeof value === 'string') {
+      if (/^\d+$/.test(value)) {
+        value = toInt(value);
+      } else {
+        value = mom.localeData().monthsParse(value);
+        if (!isNumber(value)) {
+          return mom;
+        }
+      }
+    }
+
+    dayOfMonth = Math.min(mom.date(), daysInMonth(mom.year(), value));
+    mom._d['set' + (mom._isUTC ? 'UTC' : '') + 'Month'](value, dayOfMonth);
+    return mom;
+  }
+
+  function getSetMonth(value) {
+    if (value != null) {
+      setMonth(this, value);
+      hooks.updateOffset(this, true);
+      return this;
+    } else {
+      return get(this, 'Month');
+    }
+  }
+
+  function getDaysInMonth(value) {
+    return daysInMonth(this.year(), this.month());
+  }
+
+  var defaultMonthsRegex = matchWorld;
+  function monthsShortRegex(isStrict) {
+    if (this._monthsParseExact) {
+      if (!hasOwnProp(this, '_monthsRegex')) {
+        computeMonthsParse.call(this);
+      }
+      if (isStrict) {
+        return this._monthsShortStrictRegex;
+      } else {
+        return this._monthsShortRegex;
+      }
+    } else {
+      if (!hasOwnProp(this, '_monthsShortRegex')) {
+        this._monthsShortRegex = defaultMonthsShortRegex;
+      }
+      return this._monthsShortStrictRegex && isStrict ?
+        this._monthsShortStrictRegex : this._monthsShortRegex;
+    }
+  }
+
 
 }))
