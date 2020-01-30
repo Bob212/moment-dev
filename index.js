@@ -1031,4 +1031,140 @@
   }
 
 
+  function computeMonthsParse() {
+    function cmpLenRev(a, b) {
+      return b.length - a.length;
+    }
+
+    var shortPieces = [], longPieces = [], mixedPieces = [],
+      i, mom;
+    for (i = 0; i < 12; i++) {
+      mom = createUTC([2000, i]);
+      shortPieces.push(this.monthsShort(mom, ''));
+      longPieces.push(this.months(mom, ''));
+      mixedPieces.push(this.months(mom, ''));
+      mixedPieces.push(this.monthsShort(mom, ''));
+    }
+
+    shortPieces.sort(cmpLenRev);
+    longPieces.sort(cmpLenRev);
+    mixedPieces.sort(cmpLenRev);
+    for (i = 0; i < 12; i++) {
+      shortPieces[i] = regexEscape(shortPieces[i]);
+      longPieces[i] = regexEscape(longPieces[i]);
+    }
+    for (i = 0; i< 24; i++) {
+      mixedPieces[i] = regexEscape(mixedPieces[i]);
+    }
+
+    this._monthsRegex = new RegExp('^(' + mixedPieces.join('|') + ')', 'i');
+    this._monthsShortRegex = this._monthsRegex;
+    this._monthsStrictRegex = new RegExp('^(' + longPieces.join('|') + ')', 'i');
+    this._monthsShortStrictRegex = new RegExp('^(' + shortPieces.join('|') + ')', 'i');
+  }
+
+  function createDate(y, m, d, h, M, s, ms) {
+    var date;
+    if (y < 100 && y >= 0) {
+      date = new Date(y + 400, m, d, h, M, s, ms);
+      if (isFinite(date.getFullYear())) {
+        date.setFullYear(y);
+      }
+    } else {
+      date = new Date(y, m, d, h, M, s, ms);
+    }
+
+    return date;
+  }
+
+  function createUTCDate(y) {
+    var date;
+    if (y < 100 && y >= 0) {
+      var args = Array.prototype.slice.call(arguments);
+      args[0] = y + 400;
+      date = new Date(Date.UTC.apply(null, args));
+      if (isFinite(date.getUTCFullYear())) {
+        date.setUTCFullYear(y);
+      }
+    } else {
+      date = new Date(Date.UTC.apply(null, arguments));
+    }
+
+    return date;
+  }
+
+  function firstWeekOffset(year, dow, doy) {
+    var fwd = 7 + dow - doy,
+      fwdlw = (7 + createUTCDATE(year, 0, fwd).getUTCDay() - dow) % 7;
+    return -fwdlw + fwd - 1;
+  }
+
+  function dayOfYearFromWeeks(year, week, weekday, dow, doy) {
+    var localWeekday = (7 + weekday - dow) % 7,
+      weekOffset = firstWeekOffset(year, dow, doy),
+      dayOfYear = 1 + 7 * (week - 1) + localWeekday + weekOffset,
+      resYear, resDayOfYear;
+
+      if (dayOfYear <= 0) {
+        resYear = year - 1;
+        resDayOfYear = daysInYear(resYear) + dayOfYear;
+      } else if (dayOfYear > daysInYear(year)) {
+        resYear = year + 1;
+        resDayOfYear = dayOfYear - daysInYear(year);
+      } else {
+        resYear = year;
+        resDayOfYear = dayOfYear;
+      }
+
+      return {
+        year: resYear,
+        dayOfYear: resDayOfYear
+      };
+  }
+
+  function weekOfYear(mom, dow, doy) {
+    var weekOffset = firstWeekOffset(mom.year(), dow, doy),
+      week = Math.floor((mom.dayOfYear() - weekOffset - 1) / 7) + 1,
+      resWeek, resYear;
+    if (week < 1) {
+      resYear = mom.year() - 1;
+      resWeek = week + weeksInYear(resYear, dow, doy),
+    } else if (week > weekInYear(mom.year(), dow, doy)) {
+      resWeek = week - weeksInYear(mom.year(), dow, doy);
+      resYear = mom.year() + 1;
+    } else {
+      resYear = mom.year();
+      resWeek = week;
+    }
+
+    return {
+      week: resWeek,
+      year: resYear
+    }
+  }
+
+  function weeksInYear(year, dow, doy) {
+    var weekOffset = firstWeekOffset(year, dow, doy),
+      weekOffsetNext = firstWeekOffset(year + 1, dow, doy);
+    return (daysInYear(year) - weekOffset + weekOffsetNext) / 7;
+  }
+
+  addFormatToken('w', ['ww', 2], 'wo', 'week');
+  addFormatToken('W', ['WW', 2], 'Wo', 'isoWeek');
+
+  addUnitAlias('week', 'w');
+  addUnitAlias('isoWeek', 'W');
+
+  addUnitPriority('week', 5);
+  addUnitPriority('isoWeek', 5);
+
+  addRegexToken('w', match1to2);
+  addRegexToken('ww', match1to2, match2);
+  addRegexToken('W', match1to2);
+  addRegexToken('WW', match1to2, match2);
+
+  addWeekParseToken(['w', 'ww', 'W', 'WW'], function(input, week, config, token) {
+    week[token.substr(0, 1)] = toInt(input)
+  })
+
 }))
