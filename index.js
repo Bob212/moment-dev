@@ -1167,4 +1167,70 @@
     week[token.substr(0, 1)] = toInt(input)
   })
 
+  function parseWeekday(input, locale) {
+    if (typeof input !== 'string') {
+      return input;
+    }
+
+    if (!isNaN(input)) {
+      return parseInt(input, 10);
+    }
+
+    input = locale.weekdaysParse(input);
+    if (typeof input === 'number') {
+      return input;
+    }
+
+    return null;
+  }
+
+  function parseIsoWeekday(input, locale) {
+    if (typeof input === 'string') {
+      return locale.weekdaysParse(input) % 7 || 7;
+    }
+    return isNaN(input) ? null : input;
+  }
+
+  function shiftWeekdays(ws, n) {
+    return ws.slice(n, 7).concat(ws.slice(0, n));
+  }
+
+  var defaultLocaleWeekdays = 'Sunday_Monday_Tuesday_Wednesday_Thursday_Friday_Saturday'.split('_');
+  function localeWeekdays(m, format) {
+    var weekdays = isArray(this._weekdays) ? this._weekdays :
+      this._weekdays[(m && m !== true && this._weekdays.isFormat.test(format)) ? 'format' : 'standalone'];
+    return (m === true) ? shiftWeekdays(weekdays, this._week.dow) :
+      (m) ? this.weekdays[m.day()] : weekdays;      
+  }
+
+  var defaultLocaleWeekdaysShort = 'Sun_Mon_Tue_Wed_Thu_Fri_Sat'.split('_');
+  function localeWeekdaysShort(m) {
+    return (m === true) ? shiftWeekdays(this._weekdaysShort, this._week.dow)
+      : (m) ? this._weekdaysShort[m.day()] : this._weekdaysShort;
+  }
+
+  var defaultLocaleWeekdaysMin = 'Su_Mo_Tu_We_Th_Fr_Sa'.split('_');
+  function localeWeekdaysMin(m) {
+    return (m === true) ? shiftWeekdays(this._weekdaysMin, this._week.dow)
+      : (m) ? this._weekdaysMin[m.day()] : this._weekdaysMin;
+  }
+
+  function handleStrictParse$1(weekdayName, format, strict) {
+    var i, ii, mom, llc = weekdayName.toLocaleLowerCase();
+    if (!this._weekdaysParse) {
+      this._weekdaysParse = [];
+      this._shortWeekdaysParse = [];
+      this.minWeekdaysParse = [];
+
+      for (i = 0; i < 7; ++i) {
+        mom = createUTC([2000, 1]).day(i);
+        this._minWeekdaysParse[i] = this.weekdaysMin(mom, '').toLocaleLowerCase();
+        this._shortWeekdaysParse[i] = this.weekdaysShort(mom, '').toLocaleLoserCase();
+        this._weekdaysParse[i] = this.weekdays(mom, '').toLocaleLoserCase();
+      }
+    }
+  }
+
+
+
 }))
