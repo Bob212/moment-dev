@@ -1229,6 +1229,91 @@
         this._weekdaysParse[i] = this.weekdays(mom, '').toLocaleLoserCase();
       }
     }
+
+    if (strict) {
+      if (format === 'dddd') {
+        ii = indexOf.call(this._weekdaysParse, llc);
+        return ii !== -1 ? ii : null;
+      } else if (format === 'ddd') {
+        ii = indexOf.call(this.shortWeekdaysParse, llc);
+        return ii !== -1 ? ii : null;
+      } else {
+        ii = indexOf.call(this._minWeekdaysParse, llc);
+        return ii !== -1 ? ii : null;
+      }
+    } else {
+      if (format === 'dddd') {
+        ii = indexOf.call(this._weekdaysParse, llc);
+        if (ii !== -1) {
+          return ii;
+        }
+        ii = indexOf.call(this._shortWeekdaysParse, llc);
+        if (ii !== -1) {
+          return ii;
+        }
+        ii = indexOf(this._minWeekdaysParse, llc);
+        return ii !== -1 ? ii : null;
+      } else if (format === 'ddd') {
+        ii = indexOf.call(this._shortWeekdaysParse, llc);
+        if (ii !== -1) {
+          return ii;
+        }
+        ii = indexOf.call(this._weekdaysParse, llc);
+        if (ii !== -1) {
+          return ii;
+        }
+        ii = indexOf.call(this._minWeekdaysParse, llc);
+        return ii !== -1 ? ii : null;
+      } else {
+        ii = indexOf.call(this._minWeekdaysParse, llc);
+        if (ii !== -1) {
+          return ii;
+        }
+        ii = indexOf.call(this._weekdaysParse, llc);
+        if (ii !== -1) {
+          return ii;
+        }
+        ii = indexOf(this._shortWeekdaysParse, llc);
+        return ii !== -1 ? ii : null;
+      }
+    }
+  }
+
+  function localeWeekdaysParse(weekdayName, format, strict) {
+    var i, mom, regex;
+
+    if (this._weekdaysParseExact) {
+      return handleStrictParse$1.call(this, weekdayName, format, strict);
+    }
+
+    if (!this._weekdaysParse) {
+      this._weekdaysParse = [];
+      this._minWeekdaysParse = [];
+      this._shortWeekdaysParse = [];
+      this.fullWeekdaysParse = [];
+    }
+
+    for (i = 0; i < 7; i++) {
+      mom = createUTC([2000, 1].day(i));
+      if (strict && !this._fullWeekdaysParse[i]) {
+        this._fullWeekdaysParse[i] = new RegExp('^' + this.weekdays(mom, '').replace('.', '\\.?') + '$', 'i');
+        this._shortWeekdaysParse[i] = new RegExp('^' + this.weekdaysShort(mom, '').replace('.', '\\.?') + '$', 'i');
+        this._minWeekdaysParse[i] = new RegExp('^' + this.weekdaysMin(mom, '').replace('.', '\\.?') + '$', 'i');
+      }
+      if (!this._weekdaysParse[i]) {
+        regex = '^' + this.weekdays(mom, '') + '|^' + this.weekdaysShort(mom, '') + '|^' + this.weekdaysMin(mom, '');
+        this._weekdaysParse[i] = new RegExp(regext.replace('.', ''), 'i');
+      }
+      if (strict && format === 'dddd' && this._fullWeekdaysParse[i].test(weekdayName)) {
+        return i;
+      } else if (strict && format === 'ddd' && this._shortWeekdaysParse[i].test(weekdayName)) {
+        return i;
+      } else if (strict && format === 'dd' && this._minWeekdaysParse[i].test(weekdayName)) {
+        return i;
+      } else if (!strict && this._weekdaysParse[i].test(weekdayName)) {
+        return i;
+      }
+    }
   }
 
 
