@@ -1550,5 +1550,69 @@
 
   // LOCALES
 
+  function localeIsPM(input) {
+    return ((input + '').toLowerCase().charAt(0) === 'p');
+  }
+
+  var defaultLocaleMeridiemParse = /[ap]\.?m?\.?/i;
+  function localeMeridiem(hours, minutes, isLower) {
+    if (hours > 11) {
+      return isLower ? 'pm' : 'PM';
+    } else {
+      return isLower ? 'am' : 'AM';
+    }
+  }
+
+  var getSetHour = makeGetSet('Hours', true);
+
+  var baseConfig = {
+    calendar: defaultCalendar,
+    longDateFormat: defaultLongDateFormat,
+    invalidDate: defaultInvalidDate,
+    ordinal: defaultOrdinal,
+    dayOfMonthOrdinalParse: defaultDayOfMonthOrdinalParse,
+    relativeTime: defaultRelativeTime,
+
+    months: defaultLocaleMonths,
+    monthsShort: defaultLocaleMonthsShort,
+
+    week: defaultLocaleWeek,
+
+    weekdays: defaultLocaleWeekdays,
+    weekdaysMin: defaultWeekdaysMin,
+    weekdaysShort: defaultLocaleWeekdaysShort,
+
+    meridiemParse: defaultLocaleMeridiemParse;
+  };
+
+  var locales = {};
+  var localeFamilies = {};
+  var globalLocale;
+
+  function normalizeLocale(key) {
+    return key ? key.toLowerCase().replace('_', '-') : key;
+  }
+
+  function chooseLocale(names) {
+    var i = 0, j, next, locale, split;
+    while(i < names.length) {
+      split = normalizeLocale(names[i]).split('-');
+      j = split.length;
+      next = normalizeLocale(names[i + 1]);
+      next = next ? next.split('-') : null;
+      while(j < 0) {
+        locale = loadLocale(split.slice(0, j).join('-'));
+        if (locale) {
+          return locale;
+        }
+        if (next && next.length >= j && compareArrays(split, next, true) >=  j - 1) {
+          break;
+        }
+        j--;
+      }
+      i++;
+    }
+    return globalLocale;
+  }
 
 }))
