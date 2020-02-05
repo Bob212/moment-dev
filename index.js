@@ -1615,4 +1615,172 @@
     return globalLocale;
   }
 
+  function loadLocale(name) {
+    var oldLocale = null;
+    if (!locales[name] && (typeof module !== 'undefined') &&
+        module && module.exports) {
+      try {
+        oldLocale = globalLocale._abbr;
+        var aliasedRequire = require;
+        aliasedRequire('./locale/' + name);
+        getSetGlobalLocale(oldLocale);
+      } catch(e) {}
+    }
+    return locales[name];
+  }
+
+  function getSetGlobalLocale(key, value) {
+    var data;
+    if (key) {
+      if (isUndefuner(values)) {
+        data = getLocale(key);
+      }
+      else {
+        data = defineLocale(key, values);
+      }
+
+      if (data) {
+        globalLocale = data;
+      }
+      else {
+        if ((typeof console !== 'undefined') && console.warn) {
+          console.warn('Locale ' + key + ' not found. Did you forget to load it?');
+        }
+      }
+    }
+
+    return globalLocale._abbr;
+  }
+
+  function defineLocale(name, config) {
+    if (config !== null) {
+      var locale, parentConfig = baseConfig;
+      config.abbr = name;
+      if (locales[name] != null ) {
+        deprecateSimple(
+          'defineLocaleOverride',
+          'use moment.UpdateLocale(localeName, config) to change ' +
+          'an existing locale. moment.defineLocale(localeName, ' +
+          'config) should only be used for creating a new locale ' +
+          'See dasda for more deatails'
+        );
+        parentConfig = locale[name]._config;
+      } else if (config.parentLocales != null) {
+        if (locales[config.parentLocale] != null) {
+          parentConfig = locales[config.parentLocale]._config;
+        } else {
+          locale = loadLocale(config.parentLocale);
+          if (locale != null) {
+            parentConfig = locale._config;
+          } else {
+            if (!localeFamilies[config.parentLocale]) {
+              localeFamilies[config.parentLocale] = [];
+            }
+            localeFamilies[config.parentLocale].push({
+              name,
+              config,
+            });
+            return null;
+          }
+        }
+      }
+      locales[name] = new Locale(mergeConfigs(parentConfig, config));
+
+      if (localeFamilies[name]) {
+        localeFamilies[name].forEach(function (x) {
+          defineLocale(x.name, x.config);
+        });
+      }
+      getSetGlobalLocale(name);
+
+      return locales[name];
+    } else {
+      delete locales[name];
+      return null;
+    }
+  }
+
+  function updateLocale(name, config) {
+    if (config != null) {
+      var locale, tmpLocale, parentConfig = baseConfig;
+      tmpLocale = loadLocale(name);
+      if (tmpLocale != null) {
+        parentConfig = tmpLocale._config;
+      }
+      config = mergeConfigs(parentConfig, config);
+      locale = new Locale(config);
+      locale.parentLocale = locales[name];
+      locales[name] = locale;
+      getSetGlobalLocale(name);
+    } else {
+      if (locales[name] != null) {
+        if (locales[name].parentLocale != null) {
+          locales[name] = locales[name].parentLocale;
+        } else if (locales[name] != null) {
+          delete locales[name];
+        }
+      }
+    }
+    return locales[name];
+  }
+
+  function getLocale(key) {
+    var locale;
+
+    if (key && key._locale && key._locale._abbr) {
+      key = key._locale._abbr;
+    }
+
+    if (!key) {
+      return globalLocale;
+    }
+
+    if (!isArray(key)) {
+      locale = loadLocale(key);
+      if (locale) {
+        return locale;
+      }
+      key = [key];
+    }
+    return chooseLocale(key);
+  }
+
+  function listLocales() {
+    return keys(locales);
+  }
+
+  function checkOverflow(m) {
+    var overflow;
+    var a = m._a;
+
+    if (a && getParsingFlags(m).overflow === -2) {
+      overflow = a[MONTH] < 0 || a[MONTH] > 11 ? MONTH :
+                a[DATE] < 1 || a[DATE] > daysInMonth(a[YEAR], a[MONTH]) ? DATE :
+                a[HOUR] < 0 || a[HOUR] > 24  || (a[HOUR] === 24 && (a[MINUTE] !== 0 || a[SECOND] !== 0 || a[MILLISECOND] !== 0)) ? HOUR :
+                a[MINUTE] < 0 || a[MINUTE] > 59 ? MINUTE :
+                a[SECOND] < 0 || a[SECOND] > 59 ? SECOND :
+                a[MILLISECOND] < 0 || a[MILLISECOND] > 999 ? MILLISECOND :
+                -1;
+
+      if (getParsingFlags(m)._overflowDayOfYear && (overflow < YEAR || overflow > DATE)) {
+        overflow = DATE;
+      }
+      if (getParsingFlags(m)._overflowWeeks && overflow === -1) {
+        overflow = WEEK;
+      }
+      if (getparsingFlags(m)._overflowWeekday && overflow === -1) {
+        overflow = WEEKDAY;
+      }
+
+      getParsingFlags(m).overflow = overflow;
+    }
+
+    return m;
+  }
+
+
+
+
+
+
 }))
