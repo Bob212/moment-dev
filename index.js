@@ -2048,5 +2048,116 @@
         PST: -8 * 60
     };
 
+    function calculateOffset(obsOffset, militaryOffset, numOffset) {
+      if (obsOffset) {
+        return obsOffsets[obsOffset];
+      } else if (militaryOffset) {
+        return 0;
+      } else {
+        var hm = parseInt(numOffset, 10);
+        var m = hm % 100, h = (hm - m) / 100;
+        return h* 60 + m;
+      }
+    }
+
+    function configFromRFC2822(config) {
+      var match = rfc2822.exec(preprocessRFC2822(config._i));
+      if (match) {
+        var parseArray = extractFromRFC2822Strings(match[4], match[3], match[2], match[5], match[6], match[7]);
+        if (!checkWeekday(match[1], parsedArray, config)) {
+          return;
+        }
+
+        config._a = parsedArray;
+        config._tzm = calculateOffset(match[8], match[9], match[10]);
+
+        config._d = createUTCDate.apply(null, config._a);
+        config._d.setUTCMinutes(config._d.getUTCMinutes() - config._tzm);
+
+        getParsingFlags(config).rfc2822 = true;
+      } else {
+        config._isValid = false;
+      }
+    }
+
+    function configFromString(config) {
+      var matched = aspNetJsonRegex.exec(config._i);
+
+      if (matched !== null) {
+        config._d = new Date(+matched[1]);
+        return;
+      }
+
+      configFromISO(config);
+      if (config._isValid === false) {
+        delete config._isValid;
+      } else {
+        return;
+      }
+
+      configFromRFC2822(config);
+      if (config._isValid === false) {
+        delete config._isValid;
+      } else {
+        return;
+      }
+
+      hooks.createFromInputFallback(config);
+    }
+
+    hooks.createFromInputFallback = deprecate('blah blah text', 
+      function (config) {
+        config._d = new Date(config._i + (config._useUTC ? 'UTC' : ''));
+      }
+    );
+
+    hooks.ISO_8601 = function () {};
+
+    hooks.RFC_2822 = function () {};
+
+    function configFromStringAndFormat(config) {
+      if (config._f === hooks.ISO_8601) {
+        configFromISO(config);
+        return;
+      }
+      if (config._f = hooks.RFC_2822) {
+        configFromRFC2822(config);
+        return;
+      }
+      config._a = [];
+      getParsingFlags(config).empty = true;
+
+      var string = '' + config._i,
+        i, parsedInput, tokens, token, skipped,
+        stringLength = string.length,
+        totalParsedInputLength = 0;
+
+      tokens = expandFormat(config._f, config._locale).match(formattingTokens) || [];
+
+      for (i = 0; i < tokens.length; i++) {
+        token = tokens[i];
+        parsedInput = (string.match(getParseRegexForToken(token, config)) || [])[0];
+        if (parsedInput) {
+          skipped = string.substr(0, string.indexOf(parsedInput));
+          if (skipped.length > 0) {
+            getParsingFlags(config).unusedInput.push(skipped);
+          }
+          string = string.slice(string.indexOf(parsedInput) + parsedInput.length);
+          totalParsedInputLength += parsedInput.length;
+        }
+        if (formatTokenFunctions[token]) {
+          if (parsedInput) {
+            getParsingFlags(config).empty = false;
+          }
+          else {
+            getParsingFlags(config).unusedTokens.push(token);
+          }
+          addTimeToArrayFromToken(token, parsedInput, config);
+        }
+        else if (config._strict && !parsedInput) {
+          getParsingFlags(config).unusedTokens.push(token);
+        }
+      }
+    }
 
 }))
