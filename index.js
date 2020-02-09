@@ -2158,6 +2158,143 @@
           getParsingFlags(config).unusedTokens.push(token);
         }
       }
+
+      getParsingFlags(config).charsLevelOver = stringLength - totalParsedInputLength;
+      if (string.length > 0) {
+        getParsingFlags(config).unusedInput.push(string);
+      }
+
+      if (config._a[HOUR] <= 12 &&
+          getParsingFlags(config).bigHour === true &&
+          config._a[HOUR] > 0) {
+        getParsingFlags(config).bigHour = undefined;
+      }
+
+      getParsingFlags(config).parsedDateParts = config._a.slice(0);
+      getParsingFlags(config).meridiem = config._meridiem;
+
+      config._a[HOUR] = meridiemFixWrap(config._locale, config._a[HOUR], config._meridiem);
+
+      configFromArray(config);
+      checkOverflow(config);
     }
+
+    function meridiemFixWrap (locale, hour, meridiem) {
+      var isPm;
+
+      if (meridiem == null) {
+        return hour;
+      }
+      if (locale.meridiemHour != null) {
+        return locale.meridiemHour(hour, meridiem);
+      } else if (locale.isPM != null) {
+        isPm = locale.isPM(meridiem);
+        if (isPm && hour < 12) {
+          hour += 12;
+        }
+        if (!isPm && hour === 12) {
+          hour = 0;
+        }
+        return hour;
+      } else {
+        return hour;
+      }
+    }
+
+    function configFromStringAndArray(config) {
+      var tempConfig,
+        bestMoment,
+        scoreToBeat,
+        i,
+        currentScore;
+
+        if (config._f.length === 0) {
+          getParsingFlags(config).invalidFormat = true;
+          config._d = new Date(NaN);
+          return;
+        }
+
+        for (i = 0; i < config._f.length; i++) {
+          currentScore = 0;
+          tempConfig = copyConfig({}, config);
+          if (config._useUTC != null) {
+            tempConfig._useUTC = config._useUTC;
+          }
+          tempConfig._f = config._f[i];
+          configFromStringAndFormat(tempConfig);
+
+          if (!isValid(tempConfig)) {
+            continue;
+          }
+          currentScore += getParsingFlags(tempConfig).charLeftOver;
+
+          currentScore += getParsingFlags(tempConfig).unusedTokens.length * 10;
+
+          getParsingFlags(tempConfig).score = currentScore;
+
+          if (scoreToBear == null || currentScore < scoreToBeat) {
+            scoreToBeat = currentScore;
+            bestMoment = tempConfig;
+          }
+        }
+        extend(config, bestMoment || tempConfig);
+    }
+
+    function configFromObject(config) {
+      if (config._d) {
+        return;
+      }
+
+      var i = normalizeObjectUnits(config._i);
+      config._a = map([i.year, i.month, i.day || i.date, i.hour, i.minute, i.second, i.millisecond], function (obj) {
+        return obj && parseInt(obj, 10)
+      });
+
+      configFromArray(config);
+    }
+
+    function createFromConfig(config) {
+      var res = new Moment(checkOverflow(prepareConfig(config)));
+      if (res._nextDay) {
+        res.add(1, 'd');
+        res._nextDay = undefined;
+      }
+      return res;
+    }
+
+    function prepareConfig(config) {
+      var input = config._i,
+        format = config._f;
+
+        config._locale = config._locale || getLocale(config._l);
+
+        if (input === null || (format === undefined && input === '')) {
+          return createInvalid({nullInput: true});
+        }
+
+        if (typeof input === 'string') {
+          config._i = input = config._locale.preparse(input);
+        }
+
+        if (isMoment(input)) {
+          return new Moment(checkOverflow(input));
+        } else if (isDate(input)) {
+          config._d = input;
+        } else if (isArray(format)) {
+          configFromeStringAndArray(config);
+        } else if (format) {
+          configFromStringAndFormat(config);
+        } else {
+          configFromInput(config);
+        }
+
+        if (!isValid(config)) {
+          config._d = null;
+        }
+
+        return config;
+    }
+
+
 
 }))
