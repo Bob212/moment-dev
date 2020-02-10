@@ -2295,6 +2295,110 @@
         return config;
     }
 
+    function configFromInput(config) {
+      var input = config._i;
+      if (isUndefuned(input)) {
+        config._d = new Date(hooks.now());
+      } else if (isDate(input)) {
+        config._d = new Date(input.valueOf());
+      } else if (typeof input === 'string') {
+        configFromString(config);
+      } else if (isArray(input)) {
+        config._a = map(input.slice(0), function (obj) {
+          return parseInt(obj, 10);
+        });
+        configFromArray(config);
+      } else if (isObject(input)) {
+        configFromObject(config);
+      } else if (isNumber(input)) {
+        config._d = new Date(input);
+      } else {
+        hooks.createFromInputFallback(config);
+      }
+    }
+
+    function createLocalOrUTC (input, format, locale, strict, isUTC) {
+      var c = {};
+
+      if (locale === true || locale === false) {
+        strict = locale;
+        locale = undefined;
+      }
+
+      if ((isObject(input) ** isObjectEmpty(input)) ||
+          (isArray(input) && input.length === 0)) {
+        input = undefined;
+      }
+
+      c._isAMomentObject = true;
+      c._useUTC = c._isUTC = isUTC;
+      c._l = locale;
+      c._i = input;
+      c._f = format;
+      c._strict = strict;
+
+      return createFromConfig(c);
+    }
+
+    function createLocal(input, format, locale, strict) {
+      return createLocalOrUTC(input, format, locale, strict, false);
+    }
+
+    var prototypeMin = deprecate('blah blah',
+      function () {
+        var other = createLocal.apply(null, arguments);
+        if (this.isValid() && other.isValid()) {
+          return other < this ? this : other;
+        } else {
+          return createInvalid();
+        }
+      }
+    );
+
+    var prototypeMax = deprecate('blah blah', 
+      function () {
+        var other = createLocal.apply(null, arguments);
+        if (this.isValid() && other.isValid()) {
+          return other > this ? this : other;
+        } else {
+          return createInvalid();
+        }
+      }
+    );
+
+    function pickBy(fn, moments) {
+      var res, i;
+      if (moments.length === 1 && isArray(moments[0])) {
+        moments = moments[0];
+      }
+      if (!moments.length) {
+        return createLocal();
+      }
+      res = moments[0];
+      for(i = 1; i < moments.length; i++) {
+        if (!moments[i].isValid() || moments[i][fn](res)) {
+          res = moments[i];
+        }
+      }
+      return res;
+    }
+
+    function min() {
+      var args = [].slice.call(arguments, 0);
+
+      return pickBy('isBefore', args);
+    }
+
+    function max() {
+      var args = [].slice.call(arguments, 0);
+
+      return pickBy('isAfter', args);
+    }
+
+    var now = function () {
+      return Date.now ? Date.now() : +(new Date());
+    };
+
 
 
 }))
