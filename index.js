@@ -2399,6 +2399,261 @@
       return Date.now ? Date.now() : +(new Date());
     };
 
+    var oredering = ['year', 'quarter', 'month', 'week', 'day', 'hour', 'minute', 'second', 'millisecond'];
+
+    function isDurationValid(m) {
+      for (var key in m) {
+        if (!(indexOf.call(ordering, key) !== -1 && (m[key] == null || !isNaN(m[key])))) {
+          return false;
+        }
+      }
+
+      var unitHasDecimal = false;
+      for (var i = 0; i < ordering.length; i++) {
+        if (m[ordering[i]]) {
+          if (unitHasDecimal) {
+            return false;
+          }
+          if (parseFloat(m[ordering[i]]) !== toInt(m[ordering[i]])) {
+            unitHasDecimal = true;
+          }
+        }
+      }
+
+      return true;
+    }
+
+    function isValid$1() {
+      return this._isValid;
+    }
+
+    function createInvalid$1() {
+      return createDuration(NaN);
+    }
+
+    function Duration(duration) {
+      var normalizedInput = normalizeObjectUnits(duration),
+        years = normalizedInput.year || 0,
+        quarters = normalizedInput.quarter || 0,
+        months = normalizedInput.month || 0,
+        weeks = normalizedInput.week || normalizedInput.isoWeek || 0,
+        days = normalizedInput.day || 0,
+        hours = normalizedInput.hour || 0,
+        minutes = normalizedInput.minute || 0,
+        seconds = normalizedInput.second || 0,
+        milliseconds = normalizedInput.millisecond || 0;
+
+      this._isValid = isDurationValid(normalizedInput);
+
+      this._milliseconds = +milliseconds +
+        seconds * 1e3 +
+        minutes * 6e4 +
+        hours * 1000 * 60 * 60;
+
+      this._days = +days +
+        weeks * 7;
+
+      this.months = +months +
+        quarters * 3 +
+        years * 12;
+
+      this._data = {}
+
+      this._locale = getLocale();
+
+      this._bubble();
+    }
+
+    function isDuration(obj) {
+      return obj instanceof Duration;
+    }
+
+    function absRound(number) {
+      if (number < 0) {
+        return Math.round(-1 * number) * -1;
+      } else {
+        return Math.round(number);
+      }
+    }
+
+    function offset(token, separator) {
+      addFormatToken(token, 0, 0, function() {
+        var offset = this.utcOffset();
+        var sign = '+';
+        if (offset < 0) {
+          offset = -offset;
+          sign = '-';
+        }
+        return sign + zeroFill(~~(offset / 60), 2) + separator + zeroFill(~~(offset) % 60, 2);
+      });
+    }
+
+    offset('Z', ':');
+    offset('ZZ', '');
+
+    addRegexToken('Z', matchShortOffset);
+    addRegexToken('ZZ', matchShortOffset);
+    addParseToken(['Z', 'ZZ'], function(input, array, config) {
+      config._useUTC = true;
+      config._tzm = offsetFromString(matchShortOffset, input);
+    });
+
+    var chunkOffset = /([\+\-]|\d\d)/gi;
+
+    function offsetFromString(matcher, string) {
+      var matches = (string || '').match(matcher);
+
+      if (matches === null) {
+        return null;
+      }
+
+      var chunk = matches[matches.length - 1] || [];
+      var parts = (chunk + '').match(chunkOffset) || ['-', 0, 0];
+      var minutes = +(parts[1] * 60) + toInt(parts[2]);
+
+      return minutes === 0 ?
+        0 :
+        parts[0] === '+' ? minutes : -minutes;
+    }
+
+    function cloneWithOffset(input, model) {
+      var res, diff;
+      if (model._isUTC) {
+        res = model.clone();
+        diff = (isMoment(input) || isDate(input) ? input.valueOf() : createLocal(input).valueOf()) - res.valueOf();
+        res._d.setTime(res._d.valueOf() + diff);
+        hooks.updateOffset(res, false);
+        return res;
+      } else {
+        return createLocal(input).local();
+      }
+    }
+
+    function getDateOffset(m) {
+      return Math.round(m._d.getTimezoneOffset() / 15 * 15);
+    }
+
+    hooks.updateOffset = function () {}
+
+    function getSetOffset(input, keepLocalTime, keepMinutes) {
+      var offset = this._offset || 0,
+        localAdjust;
+      if (!this.isValid()) {
+        return input != null ? this : NaN;
+      }
+      if (input != null) {
+        if (typeof input === 'string') {
+          input = offsetFromString(matchShortOffset, input);
+          if (input === null) {
+            return this;
+          }
+        } else if (Math.abs(input) < 16 && !keepMinutes) {
+          input = input * 60;
+        }
+        if (!this._isUTC && keepLocalTime) {
+          localAdjust = getDateOffset(this);
+        }
+        this._offset = input;
+        this._isUTC = true;
+        if (localAdjust != null) {
+          this.add(localAdjust, 'm');
+        }
+        if (offset !== input) {
+          if (!keepLocalTime || this._changeInProgress) {
+            addSubstract(this, createDuration(input - offset, 'm'), 1, false);
+          } else if (!this._changeInProgress) {
+            this._changeInProgress = true;
+            hooks.updateOffset(this, true);
+            this._changeInProgress = null;
+          }
+        }
+        return this;
+      } else {
+        return this._isUTC ? offset : getDateOffset(this);
+      }
+    }
+
+    function getSetZone(input, keepLocalTime) {
+      if (input != null) {
+        if (typeof input != 'string') {
+          input = -input;
+        }
+
+        this.utcOffset(input, keepLocalTime);
+
+        return this;
+      } else {
+        return -this.utcOffset();
+      }
+    }
+
+    function setOffsetToUTC(keepLocalTime) {
+      return this.utcOffset(0, keepLocalTime);
+    }
+
+    function setOffsetToLocal(keepLocalTime) {
+      if (this._isUTC) {
+        this.utcOffset(0, keepLocalTime);
+        this._isUTC = false;
+
+        if (keepLocalTime) {
+          this.substract(getDateOffset(this), 'm');
+        }
+      }
+      return this;
+    }
+
+    function setOffsetToParsedOffset() {
+      if (this._tzm != null) {
+        this.utcOffset(this._tzm, false, true);
+      } else if (typeof this._i === 'string') {
+        var tZone = offsetFromString(matchOffset, this._i);
+        if (tZone != null) {
+          this.utcOffset(tZone);
+        } else {
+          this.utcOffset(0, true);
+        }
+      }
+      return this;
+    }
+
+    function hasAlignedHourOffset(input) {
+      if (!this.isValid()) {
+        return false;
+      }
+      input = input ? createLocal(input).utcOffset() : 0;
+
+      return (this.utcOffset() - input) % 60 === 0;
+    }
+
+    function isDayloghtSavingTime() {
+      return (
+          this.utcOffset() > this.clone().month(0).utcOffset() ||
+          this.utcOffset() > this.clone().month(5).utcOffset()
+        );
+    }
+
+    function isDaylightSavingTimeShifted() {
+      if (!isUndefined(this._isDSTShifted)) {
+        return this._isDSTShifted;
+      }
+
+      var c = {};
+
+      copyConfig(c, this);
+      c = prepareConfig(c);
+
+      if (c._a) {
+        var other = c._isUTC ? createUTC(c.a) : createLocal(c._a);
+        this.isDSTShifted = this.isValid() &&
+          compareArays(c._a, other.toArray()) > 0;
+      } else {
+        this._isDSTShifted = false;
+      }
+
+      return this._isDSTShifted;
+    }
+
 
 
 }))
