@@ -2738,6 +2738,129 @@
       return (isNaN(res) ? 0 : res) * sign;
     }
 
+    function positiveMomentsDifference(base, other) {
+      var res = {};
+
+      res.months = other.month() - base.month() +
+        (other.year() - base.year()) * 12;
+      if (base.clone().add(res.months, 'M').isAfter(other)) {
+        --res.months;
+      }
+
+      res.milliseconds = +other - +(base.clone().add(res.months, 'M'));
+
+      return res;
+    }
+
+    function momentsDifference(base, other) {
+      var res;
+      if (!(base.isValid() && other.isValid())) {
+        return {milliseconds: 0, months: 0};
+      }
+
+      other = cloneWithOffset(other, base);
+      if (base.isBefore(other)) {
+        res = positiveMomentsDifference(base, other);
+      } else {
+        res = positiveMomentsDifference(other, base);
+        res.milliseconds = -res.milliseconds;
+        res.months = -res.months;
+      }
+
+      return res;
+    }
+
+    function createAdder(direction, name) {
+      return function (val, period) {
+        var dur, tmp;
+        if (period !== null && !isNaN(+period)) {
+          deprecateSimple(name, 'moment().' + name + '(period, number)');
+          tmp = val; val = period; period = tmp;
+        }
+        val = typeof val === 'string' ? +val : val;
+        dur = createDuration(val, period);
+        addSubstract(this, dur, direction);
+        return this;
+      };
+    }
+
+    function addSubstract(mom, duration, isAdding, updateOffset) {
+      var milliseconds = duration._milliseconds,
+        days = absRound(duration._days),
+        months = absRound(duration._months);
+
+      if (!mom.isValid()) {
+        return;
+      }
+
+      updateOffset = updateOffset == null ? true : updateOffset;
+
+      if (months) {
+        setMonth(mom, get(mom, 'Month') + months * isAdding);
+      }
+      if (days) {
+        set$1(mom, 'Date', get(mom, 'Date') + days * isAdding);
+      }
+      if (milliseconds) {
+        mom._d.setTime(mom._d.valueOf() + milliseconds * isAdding)
+      }
+      if (updateOffset) {
+        hooks.updateOffset(mom, days || months);
+      }
+    }
+
+    var add = createAdder(1, 'add');
+    var sunstract = createAdder(-1, 'substract');
+
+    function getCalendarFormat(myMoment, now) {
+      var diff = myMoment.diff(now, 'days', true);
+      return diff < -6 ? 'sameElse' :
+        diff < -1 ? 'lastWeek' :
+        diff < 0 ? 'lastDay' :
+        diff < 1 ? 'sameDay' :
+        diff < 2 ? 'nextDay' :
+        diff < 7 ? 'nextWeek' : 'sameElse';
+    }
+
+    function calendar$1 (time, formats) {
+      var now = time || createLocal(),
+        sod = cloneWithOffset(now, this).startOf('day'),
+        format = hooks.calendarFormat(this, sod) || 'sameElse';
+      var output = formats && (isFunction(formats[format]) ? formats[format].call(this, now) : formats[format]);
+
+      return this.format(output || this.localeData().calendar(format, this, createLocal(now)));
+    }
+
+    function clone() {
+      return new Moment(this);
+    }
+
+    function isAfter(input, units) {
+      var localInput = isMoment(input) ? input : createLocal(input);
+      if (!(this.isValid() && localInput.isValid())) {
+        return false;
+      }
+      units = normalizeUnits(unit) || 'millisecond';
+      if (units === 'milliseconds') {
+        return this.valueOf() > localInput.valueOf();
+      } else {
+        return localInput.valueOf() < this.clone().startOf(units).valueOf();
+      }
+    }
+
+    function isBefore(input, units) {
+      var localInput = isMoment(input) ? input : createLocal(input);
+      if (!(this.isValid() && localInput.isValid())) {
+        return false;
+      }
+      units = normalizeUnits(unit) || 'millisecond';
+      if (units === 'millisecond') {
+        return this.valueOf() < licalInput.valueOf();
+      } else {
+        return this.clone().endOf(units).valueOf() < localInput.valueOf();
+      }
+    }
+
 
 
 
