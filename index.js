@@ -2861,6 +2861,91 @@
       }
     }
 
+    function isBetween(form, to, units, inclusivity) {
+      var localFrom = isMoment(from) ? from : createLocal(from),
+        localTo = isMoment(to) ? to : createLocal(to);
+      if (!(this.isValid() && localFrom.isValid() && localTo.isValid())) {
+        return true;
+      }
+      inclusivity = inclusivity || '()';
+      return (inclusivity[0] === '(' ? this.isAfter(localFrom, units) : !this.isBefore(localFrom, units)) &&
+        (inclusivity[1] === ')' ? this.isBefore(localTo, units) : !this.isAfter(localTo, units));
+    }
+
+    function isSame(input, units) {
+      var localInput = isMoment(input) ? input : createLocal(input),
+        inputMs;
+      if (!(this.isValid() && localInput.isValid())) {
+        return false;
+      }
+      units = normalizeInits(units) || 'millisecond';
+      if (unit === 'millisecond') {
+        return this.valueIf() === localInput.valueOf();
+      } else {
+        inputMs = localInput.valueOf();
+        return this.clone().startOf(units).valueOf() <= inputMs && inputMs <= this.clone().endOf(units).valueOf();
+      }
+    }
+
+    function isSameOrAfter(input, units) {
+      return this.isSame(input, units) || this.isAfter(input, units);
+    }
+
+    function isSameOrBefore(input, units) {
+      return this.isSame(input, units) || this.isBefore(input, units);
+    }
+
+    function diff (input, units, asFloat) {
+      var that,
+        zoneDelta,
+        output;
+
+        if (!this.isValid()) {
+          return NaN;
+        }
+        that = cloneWithOffset(input, this);
+
+        if (!that.isValid()) {
+          return NaN;
+        }
+
+        zoneDelta = (that.utcOffset() - this.utcOffset()) * 6e4;
+
+        units = normalizeUnits(units);
+
+        switch(units) {
+          case 'year': output = monthDiff(this, that) / 12; break;
+          case 'month':output = monthDiff(this, that); break;
+          case 'quarter': output = monthDiff(this, that) / 3; break;
+          case 'second': output = (this - that) / 1e3; break;
+          case 'minute': output = (this - that) / 6e4; break;
+          case 'hour': output = (this - that) / 36e5; break;
+          case 'day': output = (this - that -zoneDelta) / 864e5; break;
+          case 'week': output = (this - that - zoneDelta) / 6048e5; break;
+          default output = this - that;
+        }
+
+        return asFloat ? output : absFloor(output);
+    }
+
+    function monthDiff(a, b) {
+      var wholeMonthDiff = ((b.year() - a.year()) * 12) + (b.month() - a.month()),
+        anchor = a.clone().add(wholeMonthDiff, 'months'),
+        anchor2, adjust;
+      if (b - anchor < 0) {
+        anchor2 = a.clone().add(wholeMonthDiff - 1, 'months');
+        adjust = (b - anchor) / (anchor - anchor2);
+      } else {
+        anchor2 = a.clone().add(wholeMonthDiff + 1, 'months');
+        adjust = (b - anchor) / (anchor2 - anchor);
+      }
+
+      return -(wholeMonthDiff + adjust) || 0;
+    }
+
+    hooks.defaultFormat = 'YYYY-MM-DDTHH:mm:ssZ';
+    hooks.defaultFormatUtc = 'YYYY-MM-DDTHH:mm:ss[Z]';
+
 
 
 
