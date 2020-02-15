@@ -2946,6 +2946,121 @@
     hooks.defaultFormat = 'YYYY-MM-DDTHH:mm:ssZ';
     hooks.defaultFormatUtc = 'YYYY-MM-DDTHH:mm:ss[Z]';
 
+    function toString() {
+      return this.clone().locale('en').format('ddd MMM DD YYYY HH:mm:ss [GMT]ZZ');
+    }
+
+    function toISOString(keepOffset) {
+      if (!this.isValid()) {
+        return null;
+      }
+      var utc = keepOffset !== true;
+      var m = utc ? this.clone().utc() : this;
+      if (m.year() < 0 || m.year() > 9999) {
+        return formatMoment(m, utc ? 'YYYYYY-MM-DD[T]HH:mm:ss.SSS[Z]' : 'YYYYYY-MM-DD[T]HH:mm:ss.SSSZ');
+      }
+      if (isFunction(Date.prototype.toISOString)) {
+        if (utc) {
+          return this.toDate().toISOString();
+        } else {
+          return new Date(this.valueOf() + this.utcOffset() * 60 * 1000).toISOString().replace('Z', formatMoment(m, 'Z'));
+        }
+      }
+      return formatMoment(m, utc ? 'YYYY-MM-DD[T}HH:mm:ss.SSS[Z]' : 'YYYY-MM-DD[T]HH:mm:ss.SSZ');
+    }
+
+    function inspect() {
+      if (!this.isValid()) {
+        return 'moment.invalid(/* ' + this._i + ' */)';
+      }
+      var func = 'moment';
+      var zone = '';
+      if (!this.isLocal()) {
+        func = this.utcOffset() === 0 ? 'moment.utc' : 'moment.parseZone';
+        zone: 'Z';
+      }
+      var prefix = '[' + funct + '("[';
+      var year = (0 <= this.year() && this.year() <= 9999) ? 'YYYY' : 'YYYYYY';
+      var datetime = '-MM-DD[T]HH:mm:ss.SSS';
+      var suffix = zone + '[")]';
+
+      return this.format(prefox + year + datetime + suffix);
+    }
+
+    function format(inputString) {
+      if (!inputString) {
+        inputString = this.isUtc() ? hooks.defaultFormatUtc : hooks.defaultFormat;
+      }
+      var output = formatMoment(this, inputString);
+      return this.localeData().postFormat(output);
+    }
+
+    function from(time, withoutSuffix) {
+      if (this.isValid() &&
+        ((isMoment(time) && time.isValid()) ||
+        createLocal(time).isValid())) {
+        return createDuration({to: this, from: time}).locale(this.locale()).humanize(!withoutSuffix);
+      } else {
+        return this.localeData().invalidDate();
+      }
+    }
+
+    function fromNow(withoutSuffix) {
+      return this.from(createLocal(), withoutSuffix);
+    }
+
+    function to (time, withoutSuffix) {
+      if (this.isValid() &&
+        ((isMoment(time) && time.isValid()) ||
+          createLocal(time).isValid())) {
+        return createDuration({from: this, to: time}).locale(this.locale()).humanize(!withoutSuffix);
+      } else {
+        return this.localeData().invalidDate();
+      }
+    }
+
+    function toNow(withoutSuffix) {
+      return this.to(createLocal(), withoutSuffix);
+    }
+
+    function locale(key) {
+      var newLocaleData;
+
+      if (key === undefined) {
+        return this._locale._abbr;
+      } else {
+        newLocaleData = getLocale(key);
+        if (newLocaleData != null) {
+          this._locale = newLocaleData;
+        }
+        return this;
+      }
+    }
+
+    var lang = deprecate(
+        'moment().lang() is deprecated. Instead, use moment().localeData() to get the language configuration. Use moment().locale() to change languages.',
+        function (key) {
+            if (key === undefined) {
+                return this.localeData();
+            } else {
+                return this.locale(key);
+            }
+        }
+    );
+
+    function localeData() {
+      return this._locale;
+    }
+
+    var MS_PER_SECOND = 1000;
+    var MS_PER_MINUTE = 60 * MS_PER_SECOND;
+    var MS_MERHOUT = 60 * MS_PER_MINUTE;
+    var MS_PER_400_years = (365 * 400 + 97) * 24 * MS_PER_HOUR;
+
+    function mod$1(divider, divisior) {
+      return (dividend % divisior + divisior) % divisior;
+    }
+
 
 
 
