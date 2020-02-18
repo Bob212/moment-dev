@@ -3314,6 +3314,86 @@
         return this;
     }
 
+    // FORMATTING
+
+    addFormatToken('Q', 0, 'Qo', 'quarter');
+    addUnitAlias('quarter', 'Q');
+    addUnitPriority('quarter', 7);
+
+    addRegexToken('Q', match1);
+    addParseToken('Q', function (input, array) {
+      array[MONTH] = (toInt(input) - 1) * 3;
+    })
+
+    function getSetQuarter(input) {
+      return input == null ? Math.ceil((this.month() + 1) / 3) : this.month((input - 1) * 3 + this.month() % 3);
+    }
+
+    addFormatToken('D', ['DD', 2], 'Do', 'date');
+    addUnitAlias('date', 'D');
+    addUnitPriority('date', 9);
+
+    addRegexToken('D', match1to2);
+    addRegexToken('DD', match1to2, match2);
+    addRegexToken('Do', function (isStrict, locale) {
+      return isStrict ?
+        (locale._dayOfMontOrdinalParse || locale._ordinalParse) :
+        locale._dayOfMonthOrdinalParseLenient;
+    })
+
+    addParseToken(['D', 'DD'], DATE);
+    addParseToken('Do', function (input, array) {
+      array[DATE] = toInt(input.match(match1to2)[0]);
+    })
+
+    var getSetDayOfMonth = makeGetSet('Date', true);
+
+    addFormatToken('DDD', ['DDDD', 3], 'DDDo', 'dayOfYear');
+
+    addUnitAlias('dayOfYear', 'DDD');
+
+    addUnitPriority('dayOfYear', 4);
+
+    addRegexToken('DDD', match1to3);
+    addRegexToken('DDDD', match3);
+    addParseToken(['DDD', 'DDDD'], function (input, array, config) {
+      config._dayOfYear = toInt(input);
+    });
+
+    function getSetDayOfYear(input) {
+      var dayOfYear = Math.round((this.clone().startOf('day') - this.clone().startOf('year')) / 864e5) + 1;
+      return input == null ? dayOfYear : this.add((input - dayOfYear), 'd');
+    }
+
+    addFormatToken('m', ['mm', 2], 0, 'minute');
+
+    addUnitAlias('minute', 'm');
+
+    addUnitPriority('minute', 14);
+
+    addRegexToken('m', match1to2);
+    addRegexToken('mm', match1to2, match2);
+    addParseToken(['m', 'mm'], MINUTE);
+
+    var getSetMinute = makeGetSet('Minutes', false);
+    addFormatToken('s', ['ss', 2], 0, 'second');
+    addUnitAlias('second', 's');
+    addUnitPriority('second', 15);
+
+    addRegexToken('s', match1to2);
+    addRegexToken('ss', match1to2, match2);
+    addParseToken(['s', 'ss'], SECOND);
+
+    var getSetSecond = makeGetSet('Seconds', false);
+
+    addFormatToken('S', 0, 0, function () {
+      return ~~(this.millisecond() / 100);
+    });
+
+    addFormatToken(0, ['SS', 2], 0, function () {
+      return ~~(this.millisecond() / 10);
+    })
+
 
 
 
