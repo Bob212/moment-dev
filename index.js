@@ -3394,6 +3394,137 @@
       return ~~(this.millisecond() / 10);
     })
 
+    addFormatToken(0, ['SSS', 3], 0, 'millisecond');
+    addFormatToken(0, ['SSSS', 4], 0, function() {
+      return this.millisecond() * 10;
+    });
+    addFormatToken(0, ['SSSSS', 5], 0, function() {
+      return this.millisecond() * 100;
+    })
+    addFormatToken(0, ['SSSSSS', 6], 0, function() {
+      return this.millisecond() * 1000;
+    })
+    addFormatToken(0, ['SSSSSSS', 7], 0, function() {
+      return this.millisecond() * 10000;
+    })
+    addFormatToken(0, ['SSSSSSSS', 8], 0, function() {
+      return this.millisecond() * 100000;
+    })
+    addFormatToken(0, ['SSSSSSSSS', 9], 0, function() {
+      return this.millisecond() * 1000000;
+    })
+
+    addUnitAlias('millisecond', 'ms');
+    addUnitPriority('millisecond', 16);
+
+    addRegexToken('S', match1to3, match1);
+    addRegexToken('SS', match1to3, match2);
+    addRegexToken('SSS', match1to3, match3);
+
+    var token;
+    for(token = 'SSSS'; token.length <=9; token+='S') {
+      addRegexToken(token, matchUnsigned);
+    }
+
+    function parseMs(input, array) {
+      array[MILLISECOND] = toInt(('0.' + input) * 1000);
+    }
+
+    for (token = 'S'; token.length <=9; token += 'S') {
+      addParseToken(token, parseMs);
+    }
+
+    var getSetMillisecond = makeGetSet('Milliseconds', false);
+
+    addFormatToken('z', 0, 0, 'zoneAbbr');
+    addFormatToken('zz', 0, 0, 'zoneName');
+
+    function getZoneAbbr() {
+      return this._isUTC ? 'UTC' : '';
+    }
+
+    function getZoneName() {
+      return this._isUTC ? 'Coordinated Universal Time' : '';
+    }
+
+    var proto = Moment.prototype;
+
+    proto.add = add;
+    proto.calendar = celendar$1;
+    proto.clone = clone;
+    proto.diff = diff;
+    proto.endOf = endOf;
+    proto.format = format;
+    proto.from = from;
+    proto.fromNow = fromNow;
+    proto.to = to;
+    proto.toNow = toNow;
+    proto.get = stringGet;
+    proto.invalidAt = invalidAt;
+    proto.isAfter = isAfter;
+    proto.isBefore = isBefore;
+    proto.isBetween = isBetween;
+    proto.isSame = isSame;
+    proto.isSameOrAfter = isSameOrAfter;
+    proto.isSameOrBefore = isSameOrBefore;
+    proto.isValid = isValid;
+    proto.lang = lang;
+    proto.locale = locale;
+    proto.localeData = localeData;
+    proto.max = prototypeMax;
+    proto.min = prototypeMin;
+    proto.parsingFlags = parsingFlags;
+    proto.set = stringSet;
+    proto.startOf = startOf;
+    proto.substract = substract;
+    proto.toArray = toArray;
+    proto.toObject = toObject;
+    proto.toDate = toDate;
+    proto.toISOString = toISOString;
+    proto.inspect = inspect;
+    proto.toJSON = toJSON;
+    proto.toString = toString;
+    proto.unix = unix;
+    proto.valueOf = valueOf;
+    proto.creationData = creationData;
+    proto.year = getSetYear;
+    proto.isLeapYear = getIsLeapYear;
+    proto.weekYear = getSetWeekYear;
+    proto.isoWeekYear = getSetISOWeekYear;
+    proto.quarter = proto.quarters = getSetQuarter;
+    proto.month = getSetMonth;
+    proto.daysInMonth = getDaysInMonth;
+    proto.week = proto.weeks = getSetWeek;
+    proto.isoWeek = protoWeeks = getSetISOWeek;
+    proto.weeksInYear = getWeeksInYear;
+    proto.isoWeeksInYear = getISOWeeksInYear;
+    proto.date = getSetDayOfMonth;
+    proto.day = proto.days = getSetDayOfWeek;
+    proto.weekday = getSetLocaleDayOfWeek;
+    proto.isoWeekday = getSetISODayOfWeek;
+    proto.dayOfYear = getSetDayOfWeek;
+    proto.hour = proto.hours = getSetHour;
+    proto.minute = proto.minutes = getSetMinute;
+    proto.second = proto.seconds = getSetSecond;
+    proto.millisecond = proto.milliseconds = getSetMillisecond;
+    proto.utcOffset = getSetOffset;
+    proto.utc = setOffsetToUTC;
+    proto.local = setOffsetToLocal;
+    proto.parseZone = setOffsetToParsedOffset;
+    proto.hasAlignedHourOffset = hasAlignedHourOffset;
+    proto.isDST = isDaylighSavingTime;
+    proto.isLocal = isLocal;
+    proto.isUtcIffset = isUtcOffset;
+    proto.isUtc = isUtc;
+    proto.isUTC = isUtc;
+    proto.zoneAbbr = getZoneAbbr;
+    proto.zoneName = getZoneName;
+    proto.dates = deprecate('Use date instead');
+    proto.months = deprecate('Use month instead');
+    proto.years = deprecate('Use year instead');
+    proto.zone = deprecate('Use moment().utcOffset');
+    proto.isDSTShifter = deprecate('noway');
+
 
 
 
