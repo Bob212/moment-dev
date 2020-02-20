@@ -3523,7 +3523,114 @@
     proto.months = deprecate('Use month instead');
     proto.years = deprecate('Use year instead');
     proto.zone = deprecate('Use moment().utcOffset');
-    proto.isDSTShifter = deprecate('noway');
+    proto.isDSTShifted = deprecate('noway');
+
+    function createUnix(input) {
+      return createLocal(input * 1000);
+    }
+
+    function createInZone() {
+      return createLocal.apply(null, arguments).parseZone();
+    }
+
+    function preParsePostFormat(string) {
+      return string;
+    }
+
+    var proto$1 = Locale.prototype;
+
+    proto$1.calendar = calendar;
+    proto$1.longDateFormat = longDateFormat;
+    proto$1.invalidDate = invalidDate;
+    proto$1.ordinal = ordinal;
+    proto$1.preparse = preParsePostFormat;
+    proto$1.postFormat = preParsePostFormat;
+    proto$1.relativeTime = relativeTime;
+    proto$1.pastFuture = pastFuture;
+    proto$1.set = set;
+
+    proto$1.months = localeMonths;
+    proto$1.monthsShort = localeMonthsShort;
+    proto$1.monthsParse = localeMonthsParse;
+    proto$1.monthsRegex = monthsRegex;
+    proto$1.monthsShortRegex = monthsShortRegex;
+    proto$1.week = localWeek;
+    proto$1.firstDayOfYear = localeFirstDayOfYear;
+    proto$1.firstDayOfWeek = localeFirstDayOfWeek;
+
+    proto$1.weekdays = localeWeekdays;
+    proto$1.weekdaysMin = localeWeekdaysMin;
+    proto$1.weekdaysShort = localeWeekdaysShort;
+    proto$1.weekdaysParse = localeWeekdaysParse;
+
+    proto$1.weekdaysRegex = weekdaysRegex;
+    proto$1.weekdaysShortRegex = weekdaysShortRegex;
+    proto$1.weekdaysMinRegex = weekdaysMinRegex;
+
+    proto$1.isPm = localeIsPM;
+    proto$1.meridiem = localeMeridiem;
+
+    function get$1(format, index, field, setter) {
+      var locale = getLocale();
+      var utc = createUTC().set(setter, index);
+      return locale[field](utc, format);
+    }
+
+    function listMonthsImpl(format, index, field) {
+      if (isNumber(format)) {
+        index = format;
+        format = undefined;
+      }
+
+      format = format || '';
+
+      if (index != null) {
+        return get$1(format, index, field, 'month');
+      }
+
+      var i;
+      var out = [];
+      for (i = 0; i < 12; i++) {
+        out[i] = get$1(format, i, field, 'month');
+      }
+      return out;
+    }
+
+    function listWeekdaysImpl(localeSorted, format, index, field) {
+      if(typeof localeSorted === 'boolean') {
+        if (isNumber(format)) {
+          index = format;
+          format = undefined;
+        }
+
+        format = format || '';
+      } else {
+        format = localeSorted;
+        index = format;
+        localeSorted = false;
+
+        if (isNumber(format)) {
+          index = format;
+          format = undefined;
+        }
+
+        format = format || '';
+      }
+
+      var locale = getLocale(),
+        shift = localeSorted ? locale._week.dow : 0;
+
+      if (index != null) {
+        return get$1(format, (index + shift) % 7, field, 'day');
+      }
+
+      var i;
+      var out = [];
+      for (i = 0; i < 7; i++) {
+        out[i] = get$1(format, (i + shift) % 7, field, 'day';)
+      }
+      return out;
+    }
 
 
 
