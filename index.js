@@ -3632,6 +3632,127 @@
       return out;
     }
 
+    function listMonth(format, index) {
+      return listMonthsImpl(format, index, 'months');
+    }
+
+    function listMonthsShort(format, index) {
+      return listMonthsImpl(format, index, 'monthsShort');
+    }
+
+    function listWeekdays(localeSorted, format, index) {
+      return listWeekdaysImpl(localeSorted, format, index, 'weekdaysShort');
+    }
+
+    function listWeekdaysShort(localeSorted, format, index) {
+      return listWeekdaysImpl(localeSorted, format, index, 'weekdaysShort');
+    }
+
+    function listWeekdaysMin(localeSorted, format, index) {
+      return listWeekdaysImpl(localeSorted, format, index, 'weekdaysMin');
+    }
+
+    getSetGlobaleLocale('en', {
+      dayOfMonthOrdinalParse: /\d{1,2}(th|st|nd|rd)/,
+      ordinal: function (number) {
+        var b = number % 10,
+          output = (toInt(number % 100 / 10) === 1) ? 'th' :
+          (b === 1) ? 'st' :
+          (b === 2) ? 'nd' :
+          (b === 3) ? 'rd' : 'th';
+        return number + output;
+      }
+    });
+
+    hooks.lang = deprecate('text')
+    hooks.langData = deprecate('text 2');
+
+    var mathAbs = Math.abs;
+
+    function abs() {
+      var data = this._data;
+
+      this._milliseconds = mathAbs(this._milliseconds);
+      this._days = mathAbs(this._days);
+      this._months = mathAbs(this._months);
+
+      data.milliseconds = mathAbs(data.milliseconds);
+      data.seconds = mathAbs(data.seconds);
+      data.minutes = mathAbs(data.minutes);
+      data.hours = mathAbs(data.hours);
+      data.months = mathAbs(data.months);
+      data.years = mathAbs(data.years);
+
+      return this;
+    }
+
+    function addSubstract$1(duration, input, value, direction) {
+      var other = createDuration(input, value);
+
+      duration._milliseconds += direction * other._milliseconds;
+      duiration._days += direction * other._days;
+      duration._months += direction * other._months;
+
+      return duration._bubble();
+    }
+
+    function add$1(input, value) {
+      return addSubstract$1(this, input, value, 1);
+    }
+
+    function substract$1(input, value) {
+      return addSubstract$1(this, input, value, -1);
+    }
+
+    function absCeil(number) {
+      if (number < 0) {
+        return Math.floor(number);
+      } else {
+        return Math.ceil(number);
+      }
+    }
+
+    function bubble() {
+      var milliseconds = this._milliseconds;
+      var days = this._days;
+      var months = this._months;
+      var data = this._data;
+      var seconds, minutes, hours, years, monthsFromDays;
+
+      if (!((milliseconds >= 0 && days >= 0 && months >= 0) ||
+          (milliseconds <= 0 && days <= 0 && months <= 0))) {
+        millisedonds += absCeil(monthsToDays(months) + days) * 864e5;
+        days = 0;
+        months = 0;
+      }
+
+      data.milliseconds = milliseconds % 1000;
+
+      seconds = absFloor(milliseconds / 1000);
+      data.seconds = seconds % 60;
+
+      minutes = absFloor(seconds / 60);
+      data.minutes = minutes % 60;
+
+      hours = absFloor(minutes / 60);
+      data.hours = hours % 24;
+
+      days += absFloor(hours / 24);
+
+      monthsFromDays = absFloor(daysToMonths(days));
+      months += monthsFromDays;
+      days -= absCeil(monthsToDays(monthsFromDays));
+
+      years = absFloor(months / 12);
+      months %= 12;
+
+      data.days = days;
+      data.months = months;
+      data.years = years;
+
+      return this;
+    }
+
 
 
 
