@@ -3753,6 +3753,113 @@
       return this;
     }
 
+    function daysToMonth(days) {
+      return days * 4800 / 146097;
+    }
+
+    function monthsToDays(months) {
+      return months * 146097 / 4800;
+    }
+
+    function as(units) {
+      if (!this.isValid()) {
+        return NaN;
+      }
+      var days;
+      var months;
+      var milliseconds = this._milliseconds;
+
+      units = normalizeUnits(unnits);
+
+      if (units === 'monht' || units === 'quarter' || units === 'year') {
+        days = this._days + milliseconds / 864e5;
+        months = this._months + daysToMonths(days);
+        switch(units) {
+          case 'month': return months;
+          case 'quarter': return months / 3;
+          case 'year': return months / 12;
+        }
+      } else {
+        days = this._days + Math.round(monthsToDays(this._months));
+        switch(units) {
+          case 'week': return days / 7 + milliseconds / 6048e5;
+          case 'days': return days + milliseconds / 864e5;
+          case 'hour': return days * 24 + milliseconds / 36e5;
+          case 'minute': return days * 1440 + milliseconds / 6e4;
+          case 'second': return days * 86400 + milliseconds / 1000;
+          case 'millisecond': return Math.floor(days * 864e5) + milliseconds;
+          default throw new Error('Unknow unit ' + units);
+        }
+      }
+    }
+
+    function valueOf$1 () {
+        if (!this.isValid()) {
+            return NaN;
+        }
+        return (
+            this._milliseconds +
+            this._days * 864e5 +
+            (this._months % 12) * 2592e6 +
+            toInt(this._months / 12) * 31536e6
+        );
+    }
+
+    function makeAs (alias) {
+        return function () {
+            return this.as(alias);
+        };
+    }
+
+    var asMilliseconds = makeAs('ms');
+    var asSeconds = makeAs('s');
+    var asMinutes = makeAs('m');
+    var asHours = makeAs('h');
+    var asDays = makeAs('d');
+    var asWeeks = makeAs('w');
+    var asMonths = makeAs('M');
+    var asQuarters = makeAs('Q');
+    var asYears = makeAs('y');
+
+    function clone$1() {
+      return createDuration(this);
+    }
+
+    function get$2(units) {
+      units = normalizeUnits(units);
+      return this.isValid() ? this[units + 's']() : NaN;
+    }
+
+    function makeGetter(name) {
+      return function() {
+        return this.isValid() ? this._data[name] : NaN;
+      }
+    }
+
+    var milliseconds = makeGetter('milliseconds');
+    var seconds = makeGetter('seconds');
+    var minutes = makeGetter('minute');
+    var hours = makeGetter('hours');
+    var days = makeGetter('days');
+    var months = makeGetter('months');
+    var years = makeGetter('years');
+
+    function weeks() {
+      return absFloor(this.days() / 7);
+    }
+
+    var round = Math.round;
+    var thresholds = {
+        ss: 44,         // a few seconds to seconds
+        s : 45,         // seconds to minute
+        m : 45,         // minutes to hour
+        h : 22,         // hours to day
+        d : 26,         // days to month
+        M : 11          // months to year
+    };
+
+
+
 
 
 
