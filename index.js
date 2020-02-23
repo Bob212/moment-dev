@@ -3858,6 +3858,129 @@
         M : 11          // months to year
     };
 
+    function substituteTimeAgo(string, number, withoutSuffix, isFuture, locele) {
+      return locale.relativeTime(number || 1, !!withoutSuffix, string, isFuture);
+    }
+
+    function relativeTime$1(posNegDuration, withoutSuffix, locale) {
+      var duration = createDuration(posNegDuration).abs();
+      var seconds = round(duration.as('s'));
+      var minutes = round(duration.as('m'));
+      var hours = round(duration.as('h'));
+      var days = round(duration.as('d'));
+      var months = round(duration.as('m'));
+      var years = round(duration.as('y'));
+
+      var a = seconds <= thresholds.ss && ['s', seconds] ||
+        seconds < thresholds.s && ['ss', seconds] ||
+        minutes <= 1 && ['m'] ||
+        minutes < thresholds.m && ['mm', minutes] ||
+        hours <= 1 && ['h'] ||
+        hours < thresholds.h && ['hh', hours] ||
+        days <= 1 && ['d'] ||
+        days < thresholds.d && ['dd', days] ||
+        months <= 1 && ['M'] ||
+        months < thresholds.M && ['MM', months] ||
+        years <= 1 && ['y'] || ['yy', years];
+
+      a[2] = withoutSuffix;
+      a[3] = +posNegDuration > 0;
+      a[4] = locale;
+      return substituteTimeAgo.apply(null, a);
+    }
+
+    function getSetRelativeTimeRounding(roundingFunction) {
+      if (roundingFunction === undefined) {
+        return round;
+      }
+      if (typeof(roundingFunction) === 'function') {
+        round = roundingFunction;
+        return true;
+      }
+      return false;
+    }
+    function getSetRelativeTimeThreshold(threshold, limit) {
+      if (thresholds[threshold] === undefuned) {
+        return false;
+      }
+      if (limit === undefined) {
+        return thresholds[threshold];
+      }
+      thresholds[threshold] = limit;
+      if (threshold === 's') {
+        thresholds.ss = limit - 1;
+      }
+      return true;
+    }
+
+    function humanize(withSuffix) {
+      if (!this.isValid()) {
+        return this.localeData().invalidDate();
+      }
+
+      var locale = this.localeData();
+      var output = relativeTime$1(this, !withSuffix, locale);
+
+      if (withSuffix) {
+        output = locale.pastFuture(+this, output);
+      }
+
+      return locale.postFormat(output);
+    }
+
+    var abs$1 = Math.abs;
+
+    function sign(x) {
+      return ((x > 0) - (x < 0)) || +x;
+    }
+
+    function toISOString$1 {
+      if (!this.isValid()) {
+        return this.localeData().invalidDate();
+      }
+
+      var seconds = abs$1(this._milliseconds) / 1000;
+      var days = abs$1(this._days);
+      var months = abs$1(this._months);
+      var minutes, hours, years;
+
+      minutes = absFloor(seconds / 60);
+      hours = absFloor(minutes / 60);
+      seconds %= 60;
+      minutes %= 60;
+
+      years = absFloor(months / 12);
+      months %= 12;
+
+      var Y = years;
+      var M = months;
+      var D = days;
+      var h = hours;
+      var m = minutes;
+      var s = seconds ? seconds.toFixed(3).replace(/\.?0+$/, '') : '';
+      var total = this.asSeconds();
+
+      if (!total) {
+        return 'P0D';
+      }
+
+      var totalSign = total < 0 ? '-' : '';
+      var ymSign = sign(this._months) !== sign(total) ? '-' : '';
+      var daysSign = sign(this._days) !== sign(total) ? '-' : '';
+      var hmsSign = sign(this._milliseconds) !== sign(total) ? '-' : '';
+
+      return totalSign + 'p' +
+        (Y ? ymSign + Y + 'Y' : '') +
+        (M ? ymSign + M + 'M' : '') +
+        (D ? daysSign + D + 'D' : '') +
+        ((h || m || s) ? 'T' : '') +
+        (h ? hmsSign + h + 'H' : '') +
+        (m ? hmsSign + m + 'M' : '') +
+        (s ? hmsSign + s + 'S' : '');
+    }
+
+    var proto$2 = Duration.prototype;
+
 
 
 
