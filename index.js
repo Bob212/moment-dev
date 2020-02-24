@@ -3981,9 +3981,97 @@
 
     var proto$2 = Duration.prototype;
 
+    proto$2.isValid = isValid$1;
+    proto$2.abs = abs;
+    proto$2.add = add$1;
+    proto$2.substract = substract$1;
+    proto$2.as = as;
+    proto$2.asMilliseconds = asMilliseconds
+    proto$2.asSeconds = asSeconds;
+    proto$2.asMinutes = asMinutes;
+    proto$2.asHours = asHours;
+    proto$2.asDays = asDays;
+    proto$2.asWeeks = asWeeks;
+    proto$2.asMonths = asMonths;
+    proto$2.asQuarters = asQuarters;
+    proto$2.asYears = asYears;
+    proto$2.valueOf = valueOf$1;
+    proto$2._bubble = bubble;
+    proto$2.clone = clone$1;
+    proto$2.get = get$2;
+    proto$2.milliseconds = milliseconds;
+    proto$2.seconds = seconds;
+    proto$2.minutes = minutes;
+    proto$2.hours = hours;
+    proto$2.days = days;
+    proto$2.weeks = weeks;
+    proto$2.months = months;
+    proto$2.years = years;
+    proto$2.humanize = humanize;
+    proto$2.toISOString = toISOString$1;
+    proto$2.toString = toISOString$1;
+    proto$2.toJSON = toISOString$1;
+    proto$2.locale = locale;
+    proto$2.localeData = localeData;
 
+    proto$2.toIsoString = deprecate('some text');
+    proto$2.lang = lang;
 
+    addFormatToken('X', 0, 0, 'unix');
+    addFormatToken('x', 0, 0, 'valueOf');
 
+    addRegexToken('x', matchSigned);
+    addRegexToken('X', matchTimeStamp);
+    addParseToken('X', function (input, array, config) {
+      config._d = new Date(parseFloat(input, 10) * 1000);
+    });
+    addParseToken('x', function(input, array, config) {
+      config._d = new Date(toInt(input));
+    });
 
+    hooks.version = '2.24.0';
 
+    setHookCallback(createLocal);
+
+    hooks.fn = proto;
+    hooks.min = min;
+    hooks.max = max;
+    hooks.now = now;
+    hooks.utc = createUTC;
+    hooks.unix = createUnix;
+    hooks.months = listMonths;
+    hooks.isDate = isDate;
+    hooks.locale = getSetGlobalLocale;
+    hooks.invalid = createInvalid;
+    hooks.duration = createDuration;
+    hooks.isMoment = isMoment;
+    hooks.weekdays = listWeekdays;
+    hooks.parseZone = createInZone;
+    hooks.localeData = getLocale;
+    hooks.isDuration = isDuration;
+    hooks.monthsShort = listMonthsShort;
+    hooks.weekdaysMin = listWeekdaysMin;
+    hooks.defineLocale = defineLocale;
+    hooks.updateLocale = updateLocale;
+    hooks.locales = listLocales;
+    hooks.weekdaysShort = listWeekdaysShort;
+    hooks.normalizeUnits = normalizeUnits;
+    hooks.relativeTimeRounding = getSetRelativeTimeRounding;
+    hooks.relativeTimeThreshold = getSetRelativeTimeThreshold;
+    hooks.calendarFormat = getCalendarFormat;
+    hooks.prototype = proto;
+
+    hooks.HTML5_FMT = {
+      DATETIME_LOCAL: 'YYYY-MM-DDTHH:mm',
+      DATETIME_LOCAL_SECONDS: 'YYYY-MM-DDTHH:mm:ss',
+      DATETIME_LOCAL_MS: 'YYYY-MM-DDTHH:mm:ss.SSS',
+      DATE: 'YYYY-MM-DD',
+      TIME: 'HH:mm',
+      TIME_SECONDS: 'HH:mm:ss',
+      TIME_MS: 'HH:mm:ss.SSS',
+      WEEK: 'GGGG-[W]WW',
+      MONTH: 'YYYY-MM'
+    };
+
+    return hooks;
 }))
